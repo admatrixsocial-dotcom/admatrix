@@ -2,7 +2,12 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { SEOReport, AnalysisInput } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+// In Vite/Netlify, we check for both process.env and import.meta.env
+const apiKey = (typeof process !== 'undefined' && process.env?.API_KEY) || 
+               (import.meta as any).env?.VITE_GEMINI_API_KEY || 
+               "";
+
+const ai = new GoogleGenAI({ apiKey });
 
 const REPORT_SCHEMA = {
   type: Type.OBJECT,
@@ -167,6 +172,10 @@ const REPORT_SCHEMA = {
 };
 
 export async function generateSEOAnalysis(input: AnalysisInput): Promise<SEOReport> {
+  if (!apiKey) {
+    throw new Error("Gemini API Key is missing. Please set the API_KEY environment variable.");
+  }
+
   const prompt = `Perform a comprehensive SEO audit for the URL: ${input.url}.
   Context:
   - Target Location: ${input.location || 'Global'}
